@@ -11,29 +11,33 @@ import unittest
 
 class Stock:
     # Optional argument of 'fixed dividend' to be passed if type is preferred
-    def __init__(self,name,kind,par_value,last_divi,*args):
+    def __init__(self,name,par_value,last_divi):
         self.symbol = name
-        self.type = kind
         self.par_value = par_value
         self.last_divi = last_divi
-        
-        # Ensure that if type is preferred, our optional arugment is passed
-        if self.type is 'Preferred':
-            if len(args) is 1:
-                self.fixed_divi = args[0]
-            else:
-                print('Unexpected combination of arguments')
-    def DividendYield(self,market_value):
-        if self.type is 'Common':
-            return self.last_divi / market_value
-        else:
-            return self.fixed_divi * self.par_value / market_value
+            
     def PERatio(self,market_value):
         try:
             PE =  market_value/self.last_divi
         except ZeroDivisionError:
             PE = float("inf")
         return PE
+
+class Common(Stock):
+    def __init__(self,name,par_value,last_divi):
+        self.type = 'Common'
+        super().__init__(name,par_value,last_divi)
+
+    def DividendYield(self,market_value):
+        return self.last_divi / market_value
+
+class Preferred(Stock):
+    def __init__(self,name,par_value,last_divi,fixed_divi):
+        self.type = 'Preferred'
+        self.fixed_divi = fixed_divi
+        super().__init__(name,par_value,last_divi)
+    def DividendYield(self,market_value):
+        return self.fixed_divi * self.par_value / market_value
     
 class StockManager:
     def __init__(self):
@@ -81,11 +85,11 @@ class TradeManager:
 class TestStockClass(unittest.TestCase):
     def setUp(self):
         self.Stocks = StockManager()
-        self.Stocks.add(Stock('TEA','Common',100,0))
-        self.Stocks.add(Stock('POP','Common',100,8))
-        self.Stocks.add(Stock('ALE','Common',60,23))
-        self.Stocks.add(Stock('GIN','Preferred',100,8,0.02))
-        self.Stocks.add(Stock('JOE','Common',250,13))
+        self.Stocks.add(Common('TEA',100,0))
+        self.Stocks.add(Common('POP',100,8))
+        self.Stocks.add(Common('ALE',60,23))
+        self.Stocks.add(Preferred('GIN',100,8,0.02))
+        self.Stocks.add(Common('JOE',250,13))
     def test_dividend_yield(self):
     	# All answers pre-calculated given values above
        self.assertEqual(self.Stocks.getStock('POP').DividendYield(100),0.08)
